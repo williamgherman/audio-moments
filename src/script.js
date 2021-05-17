@@ -1,25 +1,40 @@
-const player = new Tone.Player({
-    url: "https://tonejs.github.io/audio/loop/FWDL.mp3",
-    loop: true,
-    loopStart: 0,
-    loopEnd: 2.564104308,
-    fadeIn: 2,
-    playbackRate: 0.06,
-    reverse: true,
-}).toDestination();
-const playButton = document.querySelector("#playButton");
-const stopButton = document.querySelector("#stopButton");
-stopButton.disabled = true;
+// p5 functions
 
-playButton.addEventListener("click", async() => {
-    await Tone.start();
-    console.log("audio ready!");
-    player.start();
-    stopButton.disabled = false;
-    playButton.disabled = true;
-});
-stopButton.addEventListener("click", () => {
-    playButton.disabled = false;
-    stopButton.disabled = true;
-    player.stop();
-});
+let ambience;
+
+function preload() {
+    // soundFormats('ogg', 'mp3');
+    ambience = loadSound('../audio/pigeons-ambient.ogg');
+}
+function setup() {
+  createCanvas(windowWidth * 0.9, windowHeight * 0.9);
+  background(255);
+  ambience.loop();
+  ambience.stop(); // safety
+}
+
+function draw() {
+    let tileCount = 10;
+    background(255);
+    translate(width / tileCount / 2, height / tileCount / 2);
+    strokeWeight(3);
+
+    for (var gridY = 0; gridY < tileCount; gridY++) {
+        for (var gridX = 0; gridX < tileCount; gridX++) {
+            var posX = width / tileCount * gridX;
+            var posY = height / tileCount * gridY;
+            var shiftX = random(-mouseX, mouseX) / 90;
+            var shiftY = random(-mouseX, mouseX) / 90;
+            ellipse(posX + shiftX, posY + shiftY, 15, 15);
+        }
+    }
+}
+
+function mousePressed() {
+    if (!ambience.isPlaying())
+        ambience.play();
+}
+
+function windowResized() {
+    resizeCanvas(windowWidth * 0.9, windowHeight * 0.9);
+}
