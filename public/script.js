@@ -8,7 +8,7 @@ let overBox = false;
 let locked = false;
 let xOffset = 0.0;
 let yOffset = 0.0;
-let colorShift = 0;
+let colorShift = 0.3;
 
 let mouseVel;
 
@@ -19,11 +19,11 @@ let scene = 0;
 
 function preload() {
     soundFormats('ogg', 'mp3');
-    ambience = loadSound('../audio/pigeons-ambient.ogg');
-    scare = loadSound('../audio/pigeons-scare.ogg');
-    scare2 = loadSound('../audio/pigeons-scare-2.ogg');
-    scare3 = loadSound('../audio/pigeons-scare-3.ogg');
-    scatter = loadSound('../audio/pigeons-scatter.ogg');
+    ambience = loadSound('audio/pigeons-ambient.ogg');
+    scare = loadSound('audio/pigeons-scare.ogg');
+    scare2 = loadSound('audio/pigeons-scare-2.ogg');
+    scare3 = loadSound('audio/pigeons-scare-3.ogg');
+    scatter = loadSound('audio/pigeons-scatter.ogg');
 
 
     scare.playMode('sustain');
@@ -43,11 +43,12 @@ function setup() {
 function draw() {
     if (scene === 0) {
         let tileCount = 10;
-        backgroun(255);
+        background(255);
         translate(width / tileCount / 2, height / tileCount / 2);
         strokeWeight(3);
         stroke(0);
         fill(255, 255, 255);
+        text(mouseVel, 0, 1/4);
 
         for (var gridY = 0; gridY < tileCount; gridY++) {
             for (var gridX = 0; gridX < tileCount; gridX++) {
@@ -77,11 +78,13 @@ function draw() {
         translate(-width / tileCount / 2, -height / tileCount / 2);
         rect(box_x, box_y, boxSize, boxSize);
     } else if (scene === 1) {
-        if (colorShift < 1) {
+        if (colorShift < 1.0) {
             background(lerpColor(color(255,255,255), color(0,0,0), colorShift));
             colorShift += 0.01;
         }
-        background(0);
+        else {
+            background(0);
+        }
 
 
     }
@@ -104,7 +107,7 @@ function mouseDragged() {
     if (locked) {
         box_x = mouseX - xOffset;
         box_y = mouseY - yOffset;
-        let mouseVel = Math.sqrt(Math.pow((pmouseX - mouseX), 2) +
+        mouseVel = Math.sqrt(Math.pow((pmouseX - mouseX), 2) +
                                  Math.pow((pmouseY - mouseY), 2));
         if (!(scare.isPlaying() || scare2.isPlaying() || scare3.isPlaying()
             || scatter.isPlaying()))
