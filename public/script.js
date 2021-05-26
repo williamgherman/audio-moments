@@ -1,6 +1,12 @@
 
 const TITLE_TEXT = "AUDIO MOMENTS";
 const INSTRUCTION_TEXT = "FEED THE BIRDS";
+const FAIL_TEXT_1 = "YOU SCARED THE BIRDS AWAY";
+const FAIL_TEXT_2 = "YOU CAN NEVER DO ANYTHING RIGHT";
+const BASEMENT_INSTRUCTIONS = "I'M LOCKING YOU IN THE BASEMENT\n" +
+                              "UNTIL YOU LEARN HOW TO BEHAVE";
+
+const formResolution = 10;
 
 let ambience, scare, scare2, scare3, scatter;
 
@@ -13,12 +19,19 @@ let xOffset = 0.0;
 let yOffset = 0.0;
 let colorShift = 0.3;
 
+let angle;
+let xPoints = [], yPoints = [];
+let initRadius = 60;
+
+let focusX, focusY;
+
 let vcrfont;
 let fontSize = 32;
 
 let mouseVel = 0.0
 
 let timeElapsed = false;
+let alreadyRan = false;
 
 const TITLE_SCREEN = 0,
       INSTRUCTIONS = 1,
@@ -39,6 +52,7 @@ function preload() {
     scare2 = loadSound('assets/pigeons-scare-2.ogg');
     scare3 = loadSound('assets/pigeons-scare-3.ogg');
     scatter = loadSound('assets/pigeons-scatter.ogg');
+    darkroom = loadSound('assets/dark-room.ogg');
 
     scare.playMode('sustain');
     scare2.playMode('sustain');
@@ -59,6 +73,15 @@ function setup() {
   textAlign(CENTER, CENTER);
   textFont(vcrfont);
   textSize(fontSize);
+
+  angle = radians(360 / formResolution);
+  for (let i = 0; i < formResolution; i++) {
+      xPoints.push(cos(angle * i) * initRadius);
+      yPoints.push(sin(angle * i) * initRadius);
+  }
+
+  focusX = width / 2;
+  foxusY = height / 2;
 }
 
 function draw() {
@@ -83,14 +106,19 @@ function draw() {
         if (!timeElapsed) {
             background(color(0,0,0));
             text(INSTRUCTION_TEXT,
-                 width * 0.5 + random(-5, 5),
-                 height * 0.3 + random(-5, 5));
-            setTimeout(() => {timeElapsed = true;}, 3000);
+                 width * 0.5 + random(-3, 3),
+                 height * 0.3 + random(-3, 3));
+            if (!alreadyRan) {
+                setTimeout(() => {timeElapsed = true;}, 3000);
+                alreadyRan = true;
+            }
         } else {
             scene = BIRDS;
+            alreadyRan = false;
         }
 
     } else if (scene === BIRDS) {
+        timeElapsed = false;
         let tileCount = 10;
         background(255);
         translate(width / tileCount / 2, height / tileCount / 2);
@@ -133,10 +161,49 @@ function draw() {
         if (colorShift < 1.0) {
             background(lerpColor(color(255,255,255), color(0,0,0), colorShift));
             colorShift += 0.01;
+            alreadyRan = false;
         }
         else {
-            background(0);
+            background(color(0,0,0));
+            text(FAIL_TEXT_1,
+                 width * 0.5 + random(-3, 3),
+                 height * 0.3 + random(-3, 3));
+            if (!alreadyRan) {
+                setTimeout(() => {timeElapsed = true;}, 3000);
+                alreadyRan = true;
+            }
+            if (timeElapsed) {
+                text(FAIL_TEXT_2,
+                     width * 0.5 + random(-3, 3),
+                     height * 0.4 + random(-3, 3));
+                setTimeout(() => {scene = BASEMENT;}, 3000);
+            }
         }
+
+
+    } else if (scene === BASEMENT) {
+        background(color(0,250,0));
+        push();
+        text(BASEMENT_INSTRUCTIONS,
+             width * 0.5 + random(-1,1),
+             height * 0.1 + random(-1,1));
+        pop();
+        fill(255);
+        stroke(255);
+        focusX += (mouseX - focusX) * 0.01;
+        focusY += (mouseY - focusY) * 0.01;
+        for (let i = 0; i < formResolution; i++) {
+            xPoints[i] += random(-5, 5);
+            yPoints[i] += random(-5, 5);
+        }
+        beginShape();
+        curveVertex(xPoints[formResolution - 1] + focusX,
+                    yPoints[formResolution - 1] + focusY);
+        for (let i = 0; i < formResolution; i++)
+            curveVertex(xPoints[i] + focusX, yPoints[i] + focusY);
+        curveVertex(xPoints[0] + focusX, yPoints[0] + focusY);
+        curveVertex(xPoints[1] + focusX, yPoints[1] + focusY);
+        endShape();
 
 
     }
