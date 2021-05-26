@@ -81,7 +81,7 @@ function setup() {
   }
 
   focusX = width / 2;
-  foxusY = height / 2;
+  focusY = height / 2;
 }
 
 function draw() {
@@ -182,28 +182,30 @@ function draw() {
 
 
     } else if (scene === BASEMENT) {
-        background(color(0,250,0));
+        background(color(0,0,0));
         push();
-        text(BASEMENT_INSTRUCTIONS,
-             width * 0.5 + random(-1,1),
-             height * 0.1 + random(-1,1));
+            text(BASEMENT_INSTRUCTIONS,
+                 width * 0.5 + random(-1,1),
+                 height * 0.1 + random(-1,1));
         pop();
-        fill(255);
-        stroke(255);
-        focusX += (mouseX - focusX) * 0.01;
-        focusY += (mouseY - focusY) * 0.01;
-        for (let i = 0; i < formResolution; i++) {
-            xPoints[i] += random(-5, 5);
-            yPoints[i] += random(-5, 5);
-        }
-        beginShape();
-        curveVertex(xPoints[formResolution - 1] + focusX,
-                    yPoints[formResolution - 1] + focusY);
-        for (let i = 0; i < formResolution; i++)
-            curveVertex(xPoints[i] + focusX, yPoints[i] + focusY);
-        curveVertex(xPoints[0] + focusX, yPoints[0] + focusY);
-        curveVertex(xPoints[1] + focusX, yPoints[1] + focusY);
-        endShape();
+        push();
+            fill(255);
+            stroke(255);
+            focusX += (mouseX - focusX) * 0.01;
+            focusY += (mouseY - focusY) * 0.01;
+            for (let i = 0; i < formResolution; i++) {
+                xPoints[i] += random(-5, 5);
+                yPoints[i] += random(-5, 5);
+            }
+            beginShape();
+            curveVertex(xPoints[formResolution - 1] + focusX,
+                        yPoints[formResolution - 1] + focusY);
+            for (let i = 0; i < formResolution; i++)
+                curveVertex(xPoints[i] + focusX, yPoints[i] + focusY);
+            curveVertex(xPoints[0] + focusX, yPoints[0] + focusY);
+            curveVertex(xPoints[1] + focusX, yPoints[1] + focusY);
+            endShape();
+        pop();
 
 
     }
