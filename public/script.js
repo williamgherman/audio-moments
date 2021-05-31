@@ -1,4 +1,3 @@
-
 const TITLE_TEXT = "AUDIO MOMENTS";
 const INSTRUCTION_TEXT = "FEED THE BIRDS";
 const FAIL_TEXT_1 = "YOU SCARED THE BIRDS AWAY";
@@ -6,25 +5,28 @@ const FAIL_TEXT_2 = "YOU CAN NEVER DO ANYTHING RIGHT";
 const BASEMENT_INSTRUCTIONS = "I'M LOCKING YOU IN THE BASEMENT\n" +
                               "UNTIL YOU LEARN HOW TO BEHAVE";
 
-const formResolution = 10;
+const formResolution = 7;
 
-let ambience, scare, scare2, scare3, scatter;
+// sounds
+let ambience, scare, scare2, scare3, scatter, doorCreak, unlock;
 
+// scene objects
 let box_x, box_y;
 let boxSize = 30;
+
+// object properties
 let overBox = false;
 let overPlay = false;
 let locked = false;
 let xOffset = 0.0;
 let yOffset = 0.0;
 let colorShift = 0.3;
-
 let angle;
 let xPoints = [], yPoints = [];
-let initRadius = 60;
-
+let initRadius = 30;
 let focusX, focusY;
 
+// font
 let vcrfont;
 let fontSize = 32;
 
@@ -32,6 +34,13 @@ let mouseVel = 0.0
 
 let timeElapsed = false;
 let alreadyRan = false;
+
+// granulator setup
+let src_length;
+let voices = [];
+let num_voices = 50;
+let poly_counter = 0;
+let grainDur = 1;
 
 const TITLE_SCREEN = 0,
       INSTRUCTIONS = 1,
@@ -53,6 +62,8 @@ function preload() {
     scare3 = loadSound('assets/pigeons-scare-3.ogg');
     scatter = loadSound('assets/pigeons-scatter.ogg');
     darkroom = loadSound('assets/dark-room.ogg');
+    doorCreak = loadSound('assets/door-creak.ogg');
+    unlock = loadSound('assets/unlock.ogg');
 
     scare.playMode('sustain');
     scare2.playMode('sustain');
@@ -62,26 +73,30 @@ function preload() {
 }
 
 function setup() {
-  createCanvas(windowWidth, windowHeight - 5);
-  background(color(0,0,255));
-  //ambience.loop();
-  //ambience.stop(); // safety
-  box_x = boxSize * 1.5;
-  box_y = boxSize * 1.5;
-  rectMode(RADIUS);
+    createCanvas(windowWidth, windowHeight - 5);
+    background(color(0,0,255));
+    box_x = boxSize * 1.5;
+    box_y = boxSize * 1.5;
+    rectMode(RADIUS);
 
-  textAlign(CENTER, CENTER);
-  textFont(vcrfont);
-  textSize(fontSize);
+    textAlign(CENTER, CENTER);
+    textFont(vcrfont);
+    textSize(fontSize);
 
-  angle = radians(360 / formResolution);
-  for (let i = 0; i < formResolution; i++) {
-      xPoints.push(cos(angle * i) * initRadius);
-      yPoints.push(sin(angle * i) * initRadius);
-  }
+    angle = radians(360 / formResolution);
+    for (let i = 0; i < formResolution; i++) {
+        xPoints.push(cos(angle * i) * initRadius);
+        yPoints.push(sin(angle * i) * initRadius);
+    }
 
-  focusX = width / 2;
-  focusY = height / 2;
+    focusX = width / 2;
+    focusY = height / 2;
+
+    src_length = unlock.duration();
+    for (let i = 0; i < num_voices; i++) {
+        let voice = new GranularVoice(unlock, grainDur);
+        voices.push(voice);
+    }
 }
 
 function draw() {
@@ -131,8 +146,8 @@ function draw() {
             for (let gridX = 0; gridX < tileCount; gridX++) {
                 let posX = width / tileCount * gridX;
                 let posY = height / tileCount * gridY;
-                let shiftX = random(-mouseVel, mouseVel + 10) * 2;
-                let shiftY = random(-mouseVel, mouseVel + 10) * 2;
+                let shiftX = random(-mouseVel, mouseVel + 3) * 2;
+                let shiftY = random(-mouseVel, mouseVel + 3) * 2;
                 ellipse(posX + shiftX, posY + shiftY, 15, 15);
             }
         }
@@ -182,31 +197,31 @@ function draw() {
 
 
     } else if (scene === BASEMENT) {
-        background(color(0,0,0));
         push();
+            background(color(0,0,0));
             text(BASEMENT_INSTRUCTIONS,
                  width * 0.5 + random(-1,1),
                  height * 0.1 + random(-1,1));
         pop();
         push();
-            fill(255);
+            fill(0);
             stroke(255);
             focusX += (mouseX - focusX) * 0.01;
             focusY += (mouseY - focusY) * 0.01;
             for (let i = 0; i < formResolution; i++) {
-                xPoints[i] += random(-5, 5);
-                yPoints[i] += random(-5, 5);
+                xPoints[i] += random(-1, 1);
+                yPoints[i] += random(-1, 1);
             }
             beginShape();
             curveVertex(xPoints[formResolution - 1] + focusX,
                         yPoints[formResolution - 1] + focusY);
-            for (let i = 0; i < formResolution; i++)
+            for (let i = 0; i < formResolution; i++) {
                 curveVertex(xPoints[i] + focusX, yPoints[i] + focusY);
+            }
             curveVertex(xPoints[0] + focusX, yPoints[0] + focusY);
             curveVertex(xPoints[1] + focusX, yPoints[1] + focusY);
             endShape();
         pop();
-
 
     }
 }
@@ -220,8 +235,7 @@ function mousePressed() {
             scene = INSTRUCTIONS;
             return;
         }
-    }
-    else if (scene === BIRDS) {
+    } else if (scene === BIRDS) {
         if (overBox) {
             locked = true;
             fill(255, 255, 255);
@@ -230,6 +244,21 @@ function mousePressed() {
         }
         xOffset = mouseX - box_x;
         yOffset = mouseY - box_y;
+    } else if (scene === BASEMENT) {
+
+        // map to position of source
+        let start_play = map(focusX, 0, width, 0, src_length);
+
+        poly_counter += 1;
+        poly_counter = poly_counter % num_voices;
+        voices[poly_counter].playGrain(start_play, 1);
+
+        grainDur += map(focusY, 0, height, (-(src_length / 2)), src_length / 2);
+        grainDur = constrain(grainDur, 0.1, src_length);
+        // let newatt = grainDur * 0.2;
+        // let newrel = grainDur * 0.2;
+        for (let i = 0; i < voices.length; i++)
+            voices[i].setGrainDuration(grainDur);
     }
 }
 
@@ -268,4 +297,62 @@ function scatterBirds() {
     scatter.play();
     ambience.stop();
     scene = FAILURE;
+}
+
+/* custom GranularVoice object */
+
+function GranularVoice(src, grLength) {
+    this.sound = src;
+    this.sound.playMode('sustain');
+    this.amp = 0.5;
+
+    this.attack = 0.049;
+    this.release = 0.049;
+    this.grainDur = grLength - (this.attack + this.release);
+}
+
+GranularVoice.prototype.playGrain = function(start, rate) {
+    let now = getAudioContext().currentTime;
+
+    this.sound.play(0, rate, 1, start, this.grainDur + 1);
+
+    if (this.sound.source) {
+        this.sound.source.gain.gain.cancelScheduledValues(now);
+        this.sound.source.gain.gain.setValueAtTime(0.0, now); // start at zero
+        this.sound.source.gain.gain.linearRampToValueAtTime(this.amp,now + this.attack);
+        this.sound.source.gain.gain.linearRampToValueAtTime(this.amp, now +
+            (this.attack + this.grainDur) ); // stay during grain duration
+        this.sound.source.gain.gain.linearRampToValueAtTime(-0.0, now +
+            (this.attack + this.grainDur  + this.release) );
+    }
+
+}
+
+GranularVoice.prototype.setAmp = function(newamp) {
+    this.amp = newamp;
+}
+
+
+GranularVoice.prototype.setAttack = function(newattack){
+    if (this.grainDur > (newattack + this.release)) {
+        this.attack = newattack;
+    } else {
+        throw 'new attack value out of range';
+    }
+}
+
+GranularVoice.prototype.setRelease = function(newrelease) {
+    if (this.grainDur > (this.attack + newrelease)) {
+        this.release = newrelease;
+    } else {
+        throw 'new release value out of range';
+    }
+}
+
+GranularVoice.prototype.setGrainDuration = function(newgraindur) {
+    if (newgraindur > (this.attack + this.release)) {
+        this.grainDur = newgraindur;
+    } else {
+        throw 'new grain duration out of range';
+    }
 }
