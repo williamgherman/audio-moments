@@ -21,7 +21,7 @@ const SUCCESS_1 = "... THANK YOU.";
 const formResolution = 7;
 
 // sounds
-let ambience, scare, scare2, scare3, scatter, doorCreak, unlock, darkRoom,
+let ambience, scare, scare2, scare3, scatter, unlock, darkRoom,
     failure, success1, success2, success3;
 
 // scene objects
@@ -88,7 +88,6 @@ function preload() {
     scare3 = loadSound('assets/pigeons-scare-3.ogg');
     scatter = loadSound('assets/pigeons-scatter.ogg');
     darkRoom = loadSound('assets/dark-room.ogg');
-    doorCreak = loadSound('assets/door-creak.ogg');
     unlock = loadSound('assets/basement-sounds.ogg');
 
     failure = loadSound('assets/failure.ogg');
